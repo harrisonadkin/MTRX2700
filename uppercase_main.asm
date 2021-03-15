@@ -14,8 +14,8 @@
 
 
 
-; Include derivative-specific definitions 
-		INCLUDE 'derivative.inc' 
+; Include derivative-specific definitions
+		INCLUDE 'derivative.inc'
 
 ROMStart    EQU  $4000  ; absolute address to place my code/constant data
 
@@ -26,6 +26,8 @@ Counter     DS.W 1
 FiboRes     DS.W 1
 String:     FCC "ALL. lower"
             FCB $00
+UpperVal:      EQU #$5F
+LowerVal:      EQU #$20
 
 
 ; code section
@@ -36,11 +38,11 @@ String:     FCC "ALL. lower"
 Entry:
 _Startup:
             LDS #RAMEnd+1
-            
+
             CLI
-            
-            
-         
+
+
+
 mainLoop:
             LDX #String
 innerLoop:  LDAA 1, X+
@@ -49,21 +51,21 @@ innerLoop:  LDAA 1, X+
             BHS upperLoop
             CMPA #90
             BLS parsing
- 
-            
+
+
 upperLoop:
             STAA $2010
             bra innerLoop
-            
+
 parsing:
             CMPA #65
             BHS lowerLoop
             bra innerLoop
-            
-lowerLoop: 
+
+lowerLoop:
             STAA $3010
-            bra innerLoop 
-            
+            bra innerLoop
+
 
 
 ;**************************************************************
