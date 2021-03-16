@@ -60,7 +60,7 @@ mainLoop:
             BEQ makeLower
             CMPB #$03
             BEQ makeCapital
-            CMPB #$04 
+            CMPB #$04
             BEQ initialSentence
 
 makeUpper:
@@ -73,8 +73,8 @@ makeUpper:
 
   upperLoop:
               ANDA #UpperVal
-              BRA writeOutput 
-            
+              BRA writeOutput
+
 
 makeLower:
             LDAA 1, X+
@@ -112,11 +112,11 @@ initialSentence:
   makeSentence:
               LDAA 1, X+
               BEQ mainLoop
-              
+
               CMPA #$2E
               BEQ sentenceLoop
               BRA lowerLoop
-      
+
       sentenceLoop:
                 STAA 1, Y+
                 BRA makeCapital
@@ -129,8 +129,8 @@ writeOutput:
            BEQ makeLower
            CMPB #$03
            BEQ makeCapital
-           CMPB #$04 
-           BEQ makeSentence 
+           CMPB #$04
+           BEQ makeSentence
 
 
 
