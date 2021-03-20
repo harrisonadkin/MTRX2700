@@ -28,8 +28,17 @@ FiboRes     DS.W 1
  ; Our constants.
 String:     FCC "1234"
             FCB $00
-HexString:  DS.B 64
-LEDON:      EQU $01
+ONE:        EQU $06
+TWO:        EQU $5B
+THREE:      EQU $4F
+FOUR:       EQU $66
+FIVE:       EQU $6D
+SIX:        EQU $7D
+SEVEN:      EQU $07
+EIGHT:      EQU $7F
+NINE:       EQU $6F
+ZERO:       EQU $3F
+FLAG:       EQU $01
 
  
 ; code section
@@ -45,47 +54,113 @@ _Startup:
 
 mainLoop:
             LDX #String
-            LDY #HexString
+            
+                        
+            MOVB #$0F,DDRP               ; set ddrp to 15 ????? (output port P - 7 seg)
+            MOVB #$FF,DDRB               ; set ddrn to 255
+            MOVB #$00,DDRH               ; set push button for input
+            
+            BSET PTP, $0D
             
             
-  switchStatement:
+            LDAA #FLAG
+            CMPA #$01
+            BEQ readButton
+            CMPA #$02
+            BEQ drawString              
+            CMPA #$03               ; logic 3
+            
+            
+            
+  readButton:           
+            BCLR PTP, $01           ; which 7Seg 01 is 1, 02 is 2, 04 is 3, 08 is 4
+            LDAA PTH
+            CMPA #00
+            BEQ mappingFunction
+            BRA readButton
+  
+  drawString:
+            
+                               
+                        
+            
+  mappingFunction:
             LDAA 1, X+
             BEQ mainLoop
             
+            LDAB #ONE
             CMPA #$31
-            BEQ changeOne
+            BEQ writeHex
             
+            LDAB #TWO
             CMPA #$32
-            BEQ changeTwo
+            BEQ writeHex
             
+            LDAB #THREE
             CMPA #$33
-            BEQ changeThree
+            BEQ writeHex
             
+            LDAB #FOUR
             CMPA #$34
-            BEQ changeFour
+            BEQ writeHex
+            
+            LDAB #FIVE
+            CMPA #$35
+            BEQ writeHex
+            
+            LDAB #SIX
+            CMPA #$36
+            BEQ writeHex
+            
+            LDAB #SEVEN
+            CMPA #$37
+            BEQ writeHex
+            
+            LDAB #EIGHT
+            CMPA #$38
+            BEQ writeHex
+            
+            LDAB #NINE
+            CMPA #$39
+            BEQ writeHex
+            
+            LDAB #ZERO
+            CMPA #$30
+            BEQ writeHex
+            
+            BRA mappingFunction   ; note this loops if a letter not to display it (important for ex 4)
       
            
-
-  changeOne:
-           LDAB #$06
-           BRA writeHex   
-  
-  changeTwo:
-           LDAB #$5B
-           BRA writeHex
-  
-  changeThree:
-           LDAB #$4F
-           BRA writeHex
-  
-  changeFour:
-           LDAB #$66
-           BRA writeHex
-          
-           
+                 
   writeHex:
-           STAB 1, Y+
-           BRA switchStatement
+           STAB PORTB
+           LDAB #20
+           BRA longDelay ; short delay comment out DBNE B
+           
+           
+  longDelay:
+           LDY #60000
+           
+      shortDelay:
+           PSHA
+           PULA
+           PSHA
+           PULA
+           PSHA
+           PULA
+           PSHA
+           PULA
+           DBNE Y,shortDelay
+           DBNE B,longDelay
+   
+   LDAA #FLAG
+   CMPA #$01
+   BEQ readButton
+   
+   CMPA #$02
+   BEQ drawString              
+   
+   CMPA #$03                       
 
 
 
