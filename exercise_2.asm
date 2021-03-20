@@ -26,8 +26,9 @@ Counter     DS.W 1
 FiboRes     DS.W 1
 
  ; Our constants.
-String:     FCC "1234"
+String:     FCC "0123456789"
             FCB $00
+Digits:     dc.b $0E, $0D, $0B, $07, $00
 ONE:        EQU $06
 TWO:        EQU $5B
 THREE:      EQU $4F
@@ -38,7 +39,7 @@ SEVEN:      EQU $07
 EIGHT:      EQU $7F
 NINE:       EQU $6F
 ZERO:       EQU $3F
-FLAG:       EQU $01
+FLAG:       EQU $03
 
  
 ; code section
@@ -52,15 +53,20 @@ _Startup:
             CLI
 
 
-mainLoop:
+
+always:
             LDX #String
+
+mainLoop:
+            
+            LDY #Digits
             
                         
             MOVB #$0F,DDRP               ; set ddrp to 15 ????? (output port P - 7 seg)
             MOVB #$FF,DDRB               ; set ddrn to 255
             MOVB #$00,DDRH               ; set push button for input
-            
-            BSET PTP, $0D
+            MOVB #$FF,PTP
+
             
             
             LDAA #FLAG
@@ -68,7 +74,8 @@ mainLoop:
             BEQ readButton
             CMPA #$02
             BEQ drawString              
-            CMPA #$03               ; logic 3
+            CMPA #$03               
+            BEQ numScroll
             
             
             
@@ -79,10 +86,20 @@ mainLoop:
             BEQ mappingFunction
             BRA readButton
   
+  
   drawString:
+            LDAA 1,Y+
+            STAA PTP
+            BRA mappingFunction
+           
             
-                               
-                        
+  numScroll:
+            LDAA 1,Y+
+            BEQ mainLoop
+            STAA PTP
+            BRA mappingFunction       
+                                                        
+                       
             
   mappingFunction:
             LDAA 1, X+
@@ -135,11 +152,13 @@ mainLoop:
   writeHex:
            STAB PORTB
            LDAB #20
+           PSHX
+           PSHY
            BRA longDelay ; short delay comment out DBNE B
            
            
   longDelay:
-           LDY #60000
+           LDY #6000
            
       shortDelay:
            PSHA
@@ -153,14 +172,16 @@ mainLoop:
            DBNE Y,shortDelay
            DBNE B,longDelay
    
+   PULY
+   PULX
+   
    LDAA #FLAG
    CMPA #$01
    BEQ readButton
-   
    CMPA #$02
-   BEQ drawString              
-   
+   BEQ drawString                 
    CMPA #$03                       
+   BEQ numScroll
 
 
 
