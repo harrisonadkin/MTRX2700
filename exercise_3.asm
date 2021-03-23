@@ -29,13 +29,13 @@ FiboRes     DS.W 1
 String:     FCC "Thanks for making Tron FUN !! :) ~12345 "
             FCB $0D
             FCB $00
-Flag:       EQU $01            
+Flag:       EQU $01
 
 
 ; code boi
             ORG ROMStart
-            
-            
+
+
 Entry:
  _Startup:
             LDS #RAMEnd+1
@@ -54,38 +54,38 @@ mainLoop:
         BEQ sendString
         CMPA $02
         BEQ receiveString
-        
+
 
 sendString:
         LDAA 1, X+
         BEQ mainLoop
         BRA outputChar
- 
+
 receiveString:
         LDAA 1, X+
         BEQ mainLoop
         BRA inputChar
- 
+
 ;sendBreak:
  ;       BSET SCI1CR2,mSCI1CR2_SBK
   ;      JSR delay
    ;     BCLR SCI1CR2,mSCI1CR2_SBK
     ;    RTS
-         
+
 outputChar:
         BRCLR SCI1SR1,mSCI1SR1_TDRE,*
         STAA  SCI1DRL
         LDAB #17
         BRA delay
-        
-        
+
+
 inputChar:
-       ; solve logic 
-        
+       ; solve logic
+
 
 delay:
         LDY #60000
-   
+
    delayLoop:
           PSHA
           PULA
@@ -97,32 +97,11 @@ delay:
           PULA
           DBNE Y,delayLoop
           DBNE B,delay
-        
- BRA sendString
- 
- 
- 
- 
-   ;     LDAB #20
-        
 
-;longDelay:
- ;       LDY #60000
-  ;       
-   ;  shortDelay:
-    ;    PSHA
-     ;   PULA
-      ;  PSHA 
-       ; PULA
-        ;PSHA
-;        PULA
- ;       PSHA
-  ;      PULA
-   ;     DBNE Y,shortDelay
-    ;    DBNE B,longDelay
-     ;   
-      ;  BRA delayTest
-      
+ BRA sendString
+
+
+ 
 
 
 ;**************************************************************
