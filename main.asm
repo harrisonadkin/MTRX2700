@@ -22,119 +22,107 @@ ROMStart    EQU  $4000  ; absolute address to place my code/constant data
             ORG RAMStart
 
  ; Insert here your data definition.
-Counter       DS.W 1
-FiboRes       DS.W 1
+Counter     DS.W 1
+FiboRes     DS.W 1
 
  ; Our constants.
-String:       FCB $20
-              FCC "plEaSe mAke me. seNtence Case. a"  ; stores string
-              FCB $00 ; appends end of string with 0 character
-OutputString: DS.B 256
-Flag:         EQU $01
-UpperVal:     EQU $5F
-LowerVal:     EQU $20
+String:     FCC "Thanks for making Tron FUN !! :) ~12345 "
+            FCB $0D
+            FCB $00
+Flag:       EQU $01            
 
 
-
-
-; code section
-            ORG   ROMStart
-
-
-
+; code boi
+            ORG ROMStart
+            
+            
 Entry:
-_Startup:
+ _Startup:
             LDS #RAMEnd+1
-
             CLI
 
 
-
 mainLoop:
-            LDY #OutputString
-            LDX #String ; begin by loading memory address at label string
-            LDAB #Flag
-            CMPB #$01
-            BEQ makeUpper
-            CMPB #$02
-            BEQ makeLower
-            CMPB #$03
-            BEQ makeCapital
-            CMPB #$04
-            BEQ initialSentence
+        LDX #String
+        MOVB #$00,SCI1BDH
+        MOVB #$9C,SCI1BDL
+        MOVB #$4C,SCI1CR1
+        MOVB #$0C,SCI1CR2
+        MOVB #$00,SCI1DRL
+        LDAA #Flag
+        CMPA $01
+        BEQ sendString
+        CMPA $02
+        BEQ receiveString
+        
 
-makeUpper:
-            LDAA 1, X+
-            BEQ mainLoop
-            CMPA #$61
-            BHS upperLoop
-            BRA writeOutput
+sendString:
+        LDAA 1, X+
+        BEQ mainLoop
+        BRA outputChar
+ 
+receiveString:
+        LDAA 1, X+
+        BEQ mainLoop
+        BRA inputChar
+ 
+;sendBreak:
+ ;       BSET SCI1CR2,mSCI1CR2_SBK
+  ;      JSR delay
+   ;     BCLR SCI1CR2,mSCI1CR2_SBK
+    ;    RTS
+         
+outputChar:
+        BRCLR SCI1SR1,mSCI1SR1_TDRE,*
+        STAA  SCI1DRL
+        LDAB #17
+        BRA delay
+        
+        
+inputChar:
+       ; solve logic 
+        
 
+delay:
+        LDY #60000
+   
+   delayLoop:
+          PSHA
+          PULA
+          PSHA
+          PULA
+          PSHA
+          PULA
+          PSHA
+          PULA
+          DBNE Y,delayLoop
+          DBNE B,delay
+        
+ BRA sendString
+ 
+ 
+ 
+ 
+   ;     LDAB #20
+        
 
-  upperLoop:
-              ANDA #UpperVal
-              BRA writeOutput
-
-
-makeLower:
-            LDAA 1, X+
-            BEQ mainLoop
-            CMPA #$5A
-            BLS parsing
-            BRA writeOutput
-
-  parsing:
-              CMPA #$41  ; compare to 41 to find if letter, space or fullstop
-              BHS lowerLoop ; break if higher than 41 to lower (is a letter)
-              BRA writeOutput
-
-  lowerLoop:
-              ORAA #LowerVal
-              BRA writeOutput
-
-makeCapital:
-            LDAA 1, X+
-            BEQ mainLoop
-            CMPA #$20
-            BEQ capitalLoop
-            BRA lowerLoop
-
-    capitalLoop:
-              STAA 1, Y+
-              LDAA 1, X+
-              CMPA #$61
-              BHS upperLoop
-              BRA writeOutput
-
-initialSentence:
-            BRA makeCapital
-
-  makeSentence:
-              LDAA 1, X+
-              BEQ mainLoop
-
-              CMPA #$2E
-              BEQ sentenceLoop
-              BRA lowerLoop
-
-      sentenceLoop:
-                STAA 1, Y+
-                BRA makeCapital
-
-writeOutput:
-           STAA 1, Y+
-           CMPB #$01
-           BEQ makeUpper
-           CMPB #$02
-           BEQ makeLower
-           CMPB #$03
-           BEQ makeCapital
-           CMPB #$04
-           BEQ makeSentence
-
-
-
-
+;longDelay:
+ ;       LDY #60000
+  ;       
+   ;  shortDelay:
+    ;    PSHA
+     ;   PULA
+      ;  PSHA 
+       ; PULA
+        ;PSHA
+;        PULA
+ ;       PSHA
+  ;      PULA
+   ;     DBNE Y,shortDelay
+    ;    DBNE B,longDelay
+     ;   
+      ;  BRA delayTest
+      
 
 
 ;**************************************************************
