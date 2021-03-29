@@ -27,11 +27,11 @@ FiboRes     DS.W 1
 
  ; Our constants.
 String:       FCC "Thanks for making Tron FUN !! :) ~12345 "
-              FCB $0D
-              FCB $0A
-              FCB $00
-FLAG:         EQU $03
-InputString:  RMB 128
+                   FCB $0D
+                   FCB $0A
+                   FCB $00
+FLAG:        EQU $03
+InputString:  RMB 128 ; Reserve 128 bytes of memory for input string
 
 
 ; code boi
@@ -48,9 +48,9 @@ mainLoop:
         MOVB #$00,SCI1BDH  ; baud rate
         MOVB #$9C,SCI1BDL  ; baud rate 156 decimal
         MOVB #$00,SCI1CR1  ; always 0
-        MOVB #$00,SCI1DRL
-        LDAA #FLAG
-        LDX #String
+        MOVB #$00,SCI1DRL  
+        LDAA #FLAG ; Loads flag into accumulator A
+        LDX #String ; Loads string into interger register X
         CMPA #$01
         BEQ sendString
         LDX #InputString
@@ -65,47 +65,47 @@ mainLoop:
 ;**************************************************************
 
 sendString:
-        LDAA 1, X+
+        LDAA 1, X+ ; Will interate over all every character in string thats loaded into X
         BEQ mainLoop
         MOVB #mSCI1CR2_TE,SCI1CR2     ; mSCI1CR2_TE  // $0C
         BRCLR SCI1SR1,mSCI1SR1_TDRE,*
-        STAA SCI1DRL
+        STAA SCI1DRL ; Stores character in SCIDRL register to be sent over serial port
         LDAB #17 ; should be 17.5 but round down from random overflow
-        JSR delay
+        JSR delay  ; Branches to delay subroutine before returning 
         BRA sendString
 
 receiveString:
-        MOVB #mSCI1CR2_RE,SCI1CR2 ; bit mask to read
-        BRCLR SCI1SR1, mSCI1SR1_RDRF,*
+        MOVB #mSCI1CR2_RE,SCI1CR2 ; bit mask to read to indicate byte can be read
+        BRCLR SCI1SR1, mSCI1SR1_RDRF,* ; Loops back to previous line until a character has been recieved 
         LDAA SCI1DRL
-        STAA 1, X+
-        CMPA #$0D
-        BEQ mainLoop
-        BRA receiveString
+        STAA 1, X+ ; stores character in X and moves the X pointer one byte along
+        CMPA #$0D ;Carriage return 
+        BEQ mainLoop ; branches back to mainloop once a carriage return has been receieved
+        BRA receiveString ; else branches back to the start and reads more characters
 
 readAndWriteString:
         MOVB #mSCI1CR2_RE,SCI1CR2 ; bit mask to read
         BRCLR SCI1SR1, mSCI1SR1_RDRF,*
         LDAA SCI1DRL
-        STAA 1, X+
-        CMPA #$0D
-        BEQ parsing
+        STAA 1, X+  ; Loads and stores a new line character at the end of the string
+        CMPA #$0D ;Carriage return 
+        BEQ parsing  ; branches to parsing once a carriage return has been detected
         BRA readAndWriteString
 
     parsing:
           LDAA #$0A
-          STAA 1, X+
+          STAA 1, X+ ; Loads and stores a new line character at the end of the string
           LDAA #$00
-          STAA 1, X+
-          LDX #InputString
+          STAA 1, X+ ;  Loads and stores a NULL character at the end of the string
+          LDX #InputString ; resets pointer to the beginning of intput string 
 
     beginWrite:
           MOVB #mSCI1CR2_TE,SCI1CR2  ; bitmask to write
           BRCLR SCI1SR1,mSCI1SR1_TDRE,*
           LDAA 1, X+
-          BEQ mainLoop
+          BEQ mainLoop ; branches to mainloop if NULL
 
-          STAA SCI1DRL
+          STAA SCI1DRL ; stores A into SCI1DRL register to be output 
           LDAB #17 ; should be 17.5 but round down from random overflow
           JSR delay
           BRA beginWrite
