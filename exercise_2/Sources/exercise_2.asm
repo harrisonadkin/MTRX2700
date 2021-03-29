@@ -59,22 +59,22 @@ mainLoop:
             MOVB #$00,DDRH               ; set push button for input
             MOVB #$FF,PTP
 
-            LDAA #FLAG
-            CMPA #$01
+            LDAA #FLAG ; load FLAG into accumulator A
+            CMPA #$01 ; ; if FLAG = 1, execute readButton function
             BEQ readButton
-            CMPA #$02
+            CMPA #$02 ; if FLAG = 2, execute drawString function
             BEQ drawString
-            CMPA #$03
+            CMPA #$03 ; if FLAG = 3, execute numScroll function
             BEQ numScroll
 
 
   mappingFunction:
-            LDAA 1, X+
-            BEQ mainLoop
+            LDAA 1, X+ ; load into A and increment each time
+            BEQ mainLoop ; go to the mainloop
 
             LDAB #ONE
-            CMPA #$31
-            BEQ writeHex
+            CMPA #$31 ; compare the hex values (numbers 1 - 9 respectively)
+            BEQ writeHex ; write if equal
 
             LDAB #TWO
             CMPA #$32
@@ -116,11 +116,11 @@ mainLoop:
 
 
   writeHex:
-           STAB PORTB
-           LDAA #FLAG
+           STAB PORTB ; write to port B
+           LDAA #FLAG ; load flag onto accumulator
            CMPA #$01
-           BEQ readButton
-           BRA delay
+           BEQ readButton ; branch to readButton function if equal
+           BRA delay ; go to our delay function
 
 
 
@@ -129,15 +129,15 @@ mainLoop:
 ;**************************************************************
 
  drawString:
-              LDAA 1,Y+
-              STAA PTP
-              JSR mappingFunction
-              BRA drawString
+              LDAA 1,Y+ ; load whatever Y is pointing to and increment the index of Y to point to the second character
+              STAA PTP ; store to 7 segment
+              JSR mappingFunction ; jump to subroutine mappingFunction
+              BRA drawString ; always branch to
 
  readButton:
-              LDAA #$0E
-              STAA PTP
-              LDAA PTH
+              LDAA #$0E ; load accumulator A into the first binary 7seg LED
+              STAA PTP ; store TO 7 SEG
+              LDAA PTH ; load data to DIP switches
               CMPA #$00
               BNE readButton
               PSHX
@@ -148,16 +148,16 @@ mainLoop:
 
 
  numScroll:
-              LDY #6000
+              LDY #6000 ; ; 6000 x 4 = 24,000 cycles = 1ms
 
       dispSeg1:
                 LDAA #$0E
-                STAA PTP
-                LDAA Y
+                STAA PTP ; store to first 7 seg dip switch
+                LDAA Y ; load into Y
                 CMPA 0
                 BEQ nextChar
                 JSR mappingFunction
-                PSHX
+                PSHX ; push X into stack
 
       dispSeg2:
                 LDAA #$0D
@@ -183,16 +183,16 @@ mainLoop:
                 JSR mappingFunction
 
       nextString:
-                 PULX
-                 LDAA Y
+                 PULX ; pull value in X register out of stack
+                 LDAA Y ; load Y into A
                  CMPA 0
                  BEQ numScroll
-                 DEY
+                 DEY ; decrement index register Y
                  BRA dispSeg1
 
    nextChar:
-              INX
-              JSR mappingFunction
+              INX ; increment index of X and go to next character
+              JSR mappingFunction ; go to mappingFunction
 
 
 
@@ -201,7 +201,7 @@ mainLoop:
 ;**************************************************************
 
   delay:
-      PSHX
+      PSHX ; push register X into stack
       LDX #60 ; set to 6000 for scroll
 
     innerLoop1:
