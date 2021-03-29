@@ -44,13 +44,13 @@ mainLoop:
         MOVB #$9C,SCI1BDL  ; baud rate 156 decimal
         MOVB #$00,SCI1CR1  ; always 0
         MOVB #$00,SCI1DRL
-        MOVB #$0F,DDRP               ; set ddrp to 15 (output port P - 7 seg)
+        MOVB #$0F,DDRP               ; set ddrp to 15
         MOVB #$FF,DDRB               ; set ddrb to 255
         MOVB #$00,DDRH               ; set push button for input
         MOVB #$FF,PTP                ; set 7seg for output
         LDX #InputString
         LDY #OutputString
-        
+
 
 ;**************************************************************
 ;*                       Functions                            *
@@ -59,82 +59,82 @@ mainLoop:
 
 readString:
         MOVB #mSCI1CR2_RE,SCI1CR2 ; bit mask to read
-        BRCLR SCI1SR1, mSCI1SR1_RDRF,*
-        LDAA SCI1DRL
-        STAA 1, X+
-        CMPA #$0D
-        BEQ parsing
-        BRA readString
+        BRCLR SCI1SR1, mSCI1SR1_RDRF,* ; break unless there is an input to read
+        LDAA SCI1DRL ; else load that into accumulator a
+        STAA 1, X+ ; store in X and increment
+        CMPA #$0D ; compare to carriage return
+        BEQ parsing ; if carriage return, string is entered and we continue
+        BRA readString ; else keep looking
 
     parsing:
-          LDAA #$00
-          STAA 1, X+
-          LDX #InputString
-          
+          LDAA #$00 ; load end null char into A
+          STAA 1, X+ ; store it into X string
+          LDX #InputString ; restart the pointer to the first val of X
+
 readSwitch:
-        LDAA PTH
-        CMPA #$00
-        BEQ upperCase
-        BRA capitalCase
-        
+        LDAA PTH ; load the button state
+        CMPA #$00 ; compare to zero
+        BEQ upperCase ; if zero uppercase
+        BRA capitalCase ; else capitalCase
+
 upperCase:
-        LDAA 1, X+
-        CMPA #$0D
-        BEQ resetPointer
-        CMPA #$61
-        BHS upperLoop
-        JSR storeOutput
-        BRA upperCase
-        
+        LDAA 1, X+ ; load the inputted string character by character
+        CMPA #$0D ; if its the carriage return then start writing
+        BEQ resetPointer ; ""
+        CMPA #$61 ; compare to hex 61 to see if we must capitalise
+        BHS upperLoop ; if 61 or higher, jump to capitalise loop
+        JSR storeOutput ; else, it must be a capital or a non-letter and we simply write
+        BRA upperCase ; continue to cycle through input string
+
     upperLoop:
-          ANDA #UpperVal
-          JSR storeOutput
-          BRA upperCase
-         
+          ANDA #UpperVal ; andA turns into capital
+          JSR storeOutput ; write A
+          BRA upperCase ; continue to cycle through input string
+
 capitalCase:
-        LDAA 1, X+
-        CMPA #$0D
-        BEQ resetPointer
-        CMPA #$20
-        BEQ capitalLoop
-        ORAA #LowerVal
-        JSR storeOutput
-        BRA capitalCase
-       
+        LDAA 1, X+ ; load and increment
+        CMPA #$0D ; compare to carriage return
+        BEQ resetPointer ; if carriage return, begin writing
+        CMPA #$20 ; compare to space
+        BEQ capitalLoop ; if equal start capitalising
+        ORAA #LowerVal ; else make lowercase
+        JSR storeOutput ; and write
+        BRA capitalCase ; continue cycling
+
     capitalLoop:
-          JSR storeOutput
-          LDAA 1, X+
-          CMPA #$61
-          BHS innerLoop
-          JSR storeOutput
-          BRA capitalCase
-        
+          JSR storeOutput ; write the space
+          LDAA 1, X+ ; go to the next character
+          CMPA #$61 ; compare to capital
+          BHS innerLoop ; if not capital make capital
+          JSR storeOutput ; else write
+          BRA capitalCase ; continue cycling
+
         innerLoop:
-            ANDA #UpperVal
-            JSR storeOutput
-            BRA capitalCase
-        
+            ANDA #UpperVal ; if not capital make capital
+            JSR storeOutput ; write to output
+            BRA capitalCase ; continue cycline
+
 storeOutput:
-        STAA 1, Y+
+        STAA 1, Y+ ; function to store the new string to output
         RTS
-        
+
 resetPointer:
-        LDAA #$0D
+        LDAA #$0D ; add carriage return to output
         JSR storeOutput
-        LDAA #$0A
+        LDAA #$0A ; add vertical line to output
         JSR storeOutput
-        LDAA #$00
-        JSR storeOutput 
-        LDY #OutputString
+        LDAA #$00 ; add null char to output
+        JSR storeOutput
+        LDY #OutputString ; reset pointer to beginning of output string
         
 beginWrite:
         MOVB #mSCI1CR2_TE,SCI1CR2  ; bitmask to write
-        BRCLR SCI1SR1,mSCI1SR1_TDRE,*
-        LDAA 1, Y+
-        CMPA #$00
-        LBEQ mainLoop
-        STAA SCI1DRL
-        BRA beginWrite
+        BRCLR SCI1SR1,mSCI1SR1_TDRE,* ; if nothing to write, don't write
+        LDAA 1, Y+ ; load output string and increment
+        CMPA #$00 ; compare to end character
+        LBEQ mainLoop ; if end character finish task
+        STAA SCI1DRL ; else write the output to serial
+        BRA beginWrite ; continue writing
 
 
 
