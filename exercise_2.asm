@@ -45,26 +45,19 @@ FLAG:       EQU $03
 ; code section
             ORG   ROMStart
 
-
 Entry:
 _Startup:
             LDS #RAMEnd+1
-
             CLI
-
-
 
 mainLoop:
             LDX #String
             LDY #Digits
 
-
             MOVB #$0F,DDRP               ; set ddrp to 15 ????? (output port P - 7 seg)
             MOVB #$FF,DDRB               ; set ddrn to 255
             MOVB #$00,DDRH               ; set push button for input
             MOVB #$FF,PTP
-
-
 
             LDAA #FLAG
             CMPA #$01
@@ -73,29 +66,6 @@ mainLoop:
             BEQ drawString
             CMPA #$03
             BEQ numScroll
-
-
-
-  readButton:
-            BCLR PTP, $01           ; which 7Seg 01 is 1, 02 is 2, 04 is 3, 08 is 4
-            LDAA PTH
-            CMPA #00
-            BEQ mappingFunction
-            BRA readButton
-
-
-  drawString:
-            LDAA 1,Y+
-            STAA PTP
-            BRA mappingFunction
-
-
-  numScroll:
-            LDAA 1,Y+
-            BEQ mainLoop
-            STAA PTP
-            BRA mappingFunction
-
 
 
   mappingFunction:
@@ -142,46 +112,124 @@ mainLoop:
             CMPA #$30
             BEQ writeHex
 
-            BRA mappingFunction   ; note this loops if a letter not to display it (important for ex 4)
-
+            BRA mappingFunction
 
 
   writeHex:
            STAB PORTB
-           LDAB #20
-           PSHX
-           PSHY
-           BRA longDelay ; short delay comment out DBNE B
-
-
-  longDelay:
-           LDY #6000
-
-      shortDelay:
-           PSHA
-           PULA
-           PSHA
-           PULA
-           PSHA
-           PULA
-           PSHA
-           PULA
-           DBNE Y,shortDelay
-           DBNE B,longDelay
-
-   PULY
-   PULX
-
-   LDAA #FLAG
-   CMPA #$01
-   BEQ readButton
-   CMPA #$02
-   BEQ drawString
-   CMPA #$03
-   BEQ numScroll
+           LDAA #FLAG
+           CMPA #$01
+           BEQ readButton
+           BRA delay
 
 
 
+;**************************************************************
+;*                        Functions                           *
+;**************************************************************
+
+ drawString:
+              LDAA 1,Y+
+              STAA PTP
+              JSR mappingFunction
+              BRA drawString
+
+ readButton:
+              LDAA #$0E
+              STAA PTP
+              LDAA PTH
+              CMPA #$00
+              BNE readButton
+              PSHX
+              JSR buttonDelay
+              PULX
+              JSR mappingFunction
+              BRA readButton
+
+
+ numScroll:
+              LDY #6000
+
+      dispSeg1:
+                LDAA #$0E
+                STAA PTP
+                LDAA Y
+                CMPA 0
+                BEQ nextChar
+                JSR mappingFunction
+                PSHX
+
+      dispSeg2:
+                LDAA #$0D
+                STAA PTP
+                LDAA Y
+                CMPA 0
+                BNE noHold
+                PSHX
+                BRA dispSeg3
+
+          noHold:
+                  JSR mappingFunction
+
+
+      dispSeg3:
+                LDAA #$0B
+                STAA PTP
+                JSR mappingFunction
+
+      dispSeg4:
+                LDAA #$07
+                STAA PTP
+                JSR mappingFunction
+
+      nextString:
+                 PULX
+                 LDAA Y
+                 CMPA 0
+                 BEQ numScroll
+                 DEY
+                 BRA dispSeg1
+
+   nextChar:
+              INX
+              JSR mappingFunction
+
+
+
+;**************************************************************
+;*                         Delays                             *
+;**************************************************************
+
+  delay:
+      PSHX
+      LDX #6000
+
+    innerLoop1:
+        LDAA #100
+    innerLoop2:
+        PSHA
+        PULA
+        PSHA
+        PULA
+      DBNE A, innerLoop2
+      DBNE X, innerLoop1
+      PULX
+  RTS
+
+  buttonDelay:
+      LDX #60000
+
+    innerButtonLoop1:
+        LDAA #20
+    innerButtonLoop2:
+        PSHA
+        PULA
+        PSHA
+        PULA
+      DBNE A, innerButtonLoop2
+      DBNE X, innerButtonLoop1
+
+  RTS
 
 
 ;**************************************************************

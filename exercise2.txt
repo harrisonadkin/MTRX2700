@@ -112,7 +112,7 @@ mainLoop:
             CMPA #$30
             BEQ writeHex
      
-            BRA mappingFunction   ; note this loops if a letter not to display it (important for ex 4)
+            BRA mappingFunction  
 
 
   writeHex:
@@ -231,8 +231,6 @@ mainLoop:
       
   RTS
   
-
-
 
 ;**************************************************************
 ;*                 Interrupt Vectors                          *
