@@ -28,6 +28,8 @@ FiboRes     DS.W 1
  ; Defining memory for input + output string
 InputString:  RMB 128
 OutputString: RMB 128
+UpperVal:     EQU $5F
+LowerVal:     EQU $20
 
 
 ; Begin Code
@@ -126,7 +128,7 @@ resetPointer:
         LDAA #$00 ; add null char to output
         JSR storeOutput
         LDY #OutputString ; reset pointer to beginning of output string
-        
+
 beginWrite:
         MOVB #mSCI1CR2_TE,SCI1CR2  ; bitmask to write
         BRCLR SCI1SR1,mSCI1SR1_TDRE,* ; if nothing to write, don't write
